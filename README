@@ -1,0 +1,2 @@
+# music_lights.py can be used for playing a .wav file and simultaneously controlling up to 3 Philips Hue lights according
+# to the most prominent notes in each 3-second interval of the song. 
