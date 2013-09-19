@@ -6,4 +6,7 @@ python 2.7
 mingus >= 0.4.2.3
 phue >= 0.7
 
+Command line:
+python music_lights.py -f filename.wav -n number_of_lights -i hue_bridge_ip
+
 Development in progress...
