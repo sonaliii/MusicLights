@@ -1,5 +1,6 @@
 __author__ = 'Sonali'
 
+from optparse import OptionParser
 import wave
 from mingus.extra import fft
 import collections
@@ -22,9 +23,17 @@ notes_hues_dict = {'C': 824,
                    'B': 57824
                     }
 
-which_file = '/Users/Sonali/lm.wav' #raw_input('Type .wav file path: ')
-number_of_lights = 3
-hue_bridge_ip = '192.168.42.87'
+
+parser = OptionParser()
+parser.add_option('-f', '--which_file', help = '.wav file path')
+parser.add_option('-n', '--number_of_lights', help = 'number of Hue lights from 1 to 3')
+parser.add_option('-i', '--hue_bridge_ip', help = 'Hue bridge IP address')
+(options, args) = parser.parse_args()
+
+
+which_file = options.which_file
+number_of_lights = int(options.number_of_lights)
+hue_bridge_ip = options.hue_bridge_ip
 
 
 def mono_only(wavfile):
@@ -118,6 +127,9 @@ def notes_map(notes_list):
 
 
 def counter_for_note_map(notes_map):
+    """
+    Takes in a dictionary with notes and corresponding amplitudes. Returns a list of the top notes
+    """
     top_notes_list = []
     for dictionary in notes_map:
         top_notes = collections.Counter(dictionary).most_common(number_of_lights)
@@ -125,19 +137,35 @@ def counter_for_note_map(notes_map):
     return top_notes_list
 
 
-def note_to_color(map_of_note_counter):
-    command =  {'transitiontime' : 10, 'on' : True, 'sat' : 255, 'hue':57824}
+def lights_on():
+    """
+    Turns on Philips Hue Lights.
+    """
+    command =  {'transitiontime' : 30, 'on' : True, 'sat' : 255, 'hue':57824}
     b.set_light(range(1, number_of_lights+1), command)
     b.set_light(range(1, number_of_lights+1), 'bri', 255)
 
+
+def play_song():
+    """
+    Plays the song
+    """
     subprocess.Popen(('afplay', which_file))
 
+
+def note_to_color(map_of_note_counter):
+    """
+    Converts prominent notes to colors, while setting the Hue lights to these colors
+    """
     for one_note_map in map_of_note_counter:
         for index, (note, amp) in enumerate(one_note_map):
             light_color = notes_hues_dict[note]
             change_command = {'transitiontime': 28, 'hue': light_color}
             b.set_light(index + 1, change_command)
         time.sleep(2.9)
+
+
+def lights_off():
     off_command = {'transitiontime': 10, 'on': False}
     b.set_light(range(1, number_of_lights+1), off_command)
 
@@ -159,5 +187,8 @@ the_chunks = chunks(file_data, size_chunks)
 find_notes = note_conversion(the_chunks)
 map_of_notes = notes_map(find_notes)
 map_of_note_counter = counter_for_note_map(map_of_notes)
-turn_on_lights = note_to_color(map_of_note_counter)
+play_song()
+lights_on()
+note_to_color(map_of_note_counter)
+lights_off()
 
